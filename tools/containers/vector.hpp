@@ -48,7 +48,7 @@
     size_t capacity_;
   };
 
-
+#include "vector.inl"
 //} // tools::containers
 
 

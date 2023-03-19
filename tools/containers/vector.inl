@@ -6,7 +6,7 @@
   Vector<T>::Vector() {
     size_ = 0;
     capacity_ = 4;
-    data_ = malloc(sizeof(T) * capacity_);
+    data_ = reinterpret_cast<T*>(malloc(sizeof(T) * capacity_));
   }
 
   template<typename T>
@@ -48,7 +48,7 @@
   void Vector<T>::PushBack(const T &elem) {
     if (size_ + 1 > capacity_) {
       capacity_ *= 2;
-      data_ = realloc(data_, sizeof(T) * capacity_);
+      data_ = reinterpret_cast<T*>(realloc(data_, sizeof(T) * capacity_));
     }
     data_[size_++] = elem;
   }
@@ -92,7 +92,7 @@
       return res;
     }();
 
-    data_ = realloc(data_, sizeof(T) * capacity_);
+    data_ = reinterpret_cast<T*>(realloc(data_, sizeof(T) * capacity_));
 
     for (size_t i(size_ - 1); i < size; ++i) {
       data_[i] = default_value;
