@@ -6,7 +6,7 @@
 #include <iterator>
 
 
-//namespace tools::containers {
+namespace tools::containers {
 
 
   template<typename T>
@@ -48,7 +48,6 @@
     size_t capacity_;
   };
 
+} // tools::containers
 #include "vector.inl"
-//} // tools::containers
-
 
