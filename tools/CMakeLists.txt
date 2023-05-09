@@ -4,9 +4,8 @@ project(tools_test)
 set(CMAKE_CXX_STANDARD 23)
 
 
-
 set(SRC_EXTRA
-        containers/vector.hpp containers/vector.inl
+        containers/vector.hpp containers/string.hpp
         )
 
 set(MAIN_EXEC main.cpp ${SRC_EXTRA})
