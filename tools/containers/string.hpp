@@ -1,8 +1,13 @@
+#pragma once
+
 #include <cassert>
 #include <cctype>
 #include <iostream>
 #include <string>
-
+#include <strstream>
+namespace {
+constexpr const size_t kMaxStringSize = 1'048'576;
+}
 namespace tools::containers {
 
 class String {
@@ -14,7 +19,7 @@ public:
   }
 
   String(const String &string) {
-    data_ = new char[string.size_];
+    data_ = new char[string.capacity_];
     capacity_ = string.capacity_;
     size_ = string.size_;
     for (size_t i(0); i < size_; ++i) {
@@ -31,9 +36,19 @@ public:
     }
   }
 
-  size_t Size() const { return size_; }
+  String(String &&sr) noexcept {
+    this->data_ = sr.data_;
+    sr.data_ = nullptr;
+    this->size_ = sr.size_;
+    this->capacity_ = sr.capacity_;
+  }
 
-  ~String() { delete data_; }
+  [[nodiscard]] size_t Size() const { return size_; }
+
+  ~String() {
+    delete[] data_;
+    data_ = nullptr;
+  }
 
   char &operator[](size_t index) {
     if (index >= size_)
@@ -49,7 +64,7 @@ public:
 
   void Insert(char v) {
     if (size_ + 1 > capacity_) {
-      Resize();
+      Reallocate();
     }
     data_[size_++] = v;
   }
@@ -63,34 +78,78 @@ public:
     size_ -= cnt;
   }
 
+  String &operator=(const String &sr) {
+    if (this == &sr)
+      return *this;
+    this->data_ = new char[sr.capacity_];
+    this->capacity_ = sr.capacity_;
+    this->size_ = 0;
+    for (; this->size_ < sr.size_; ++this->size_) {
+      this->data_[this->size_] = sr.data_[this->size_];
+    }
+    return *this;
+  }
+
+  String &operator=(String &&sr) noexcept {
+    data_ = sr.data_;
+    sr.data_ = nullptr;
+    capacity_ = sr.capacity_;
+    sr.capacity_ = 0;
+    size_ = sr.size_;
+    sr.size_ = 0;
+    return *this;
+  }
+
+  friend std::istream &operator>>(std::istream &is, String &s);
+
 private:
-  char *data_;
+  char *data_ = nullptr;
   size_t size_;
   size_t capacity_;
 
-  void Resize() {
+  void Reallocate() {
     capacity_ *= 2;
     char *n_data = new char[capacity_];
     for (size_t i(0); i < size_; ++i) {
       n_data[i] = data_[i];
     }
-    delete data_;
+    delete[] data_;
     data_ = n_data;
   }
 };
 
-std::ostream &operator<<(std::ostream &os, String s) {
+std::ostream &operator<<(std::ostream &os, const String &s) {
   for (size_t i(0); i < s.Size(); ++i) {
     os << s[i];
   }
   return os;
 }
 
-std::istream &operator>>(std::istream &is, String s) {
-  for (size_t i(0); i < s.Size(); ++i) {
-    char tmp;
-    is >> tmp;
-    s.Insert(tmp);
+
+
+std::istream &operator>>(std::istream &is, String &s) {
+  delete[] s.data_;
+  s.capacity_ = 4;
+  s.size_ = 0;
+  s.data_ = new char[s.capacity_];
+  is.setstate(std::istream::goodbit);
+  std::basic_istream<char>::sentry sentry(is);
+  if (sentry) {
+    while (s.size_ < kMaxStringSize) {
+      int c = is.rdbuf()->sgetc();
+      if (c == EOF) {
+        is.setstate(std::istream::eofbit);
+        break;
+      }
+      if (isspace(c)) {
+        break;
+      }
+      s.Insert(static_cast<char>(c));
+      is.rdbuf()->sbumpc();
+    }
+    if (s.size_ == 0) {
+      is.setstate(std::istream::failbit);
+    }
   }
   return is;
 }
