@@ -81,6 +81,7 @@ public:
   String &operator=(const String &sr) {
     if (this == &sr)
       return *this;
+    delete[] data_;
     this->data_ = new char[sr.capacity_];
     this->capacity_ = sr.capacity_;
     this->size_ = 0;
@@ -91,6 +92,7 @@ public:
   }
 
   String &operator=(String &&sr) noexcept {
+    delete[] data_;
     data_ = sr.data_;
     sr.data_ = nullptr;
     capacity_ = sr.capacity_;
