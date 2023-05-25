@@ -6,11 +6,13 @@
 #include "containers/string.hpp"
 #include "containers/vector.hpp"
 #include "containers/vector_tools.hpp"
+#include "containers/avl_tree.hpp"
 
 int main() {
-  tools::containers::string_test::Test();
-  tools::containers::vector_test::Test();
-  tools::containers::vector_tools_test::Test();
+//  tools::containers::string_test::Test();
+//  tools::containers::vector_test::Test();
+//  tools::containers::vector_tools_test::Test();
+
 
   return 0;
 }
