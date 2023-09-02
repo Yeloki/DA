@@ -1,8 +1,8 @@
-#include <optional>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <string>
-#include <algorithm>
 #include <utility>
 
 namespace tools::containers {
@@ -327,8 +327,6 @@ private:
 
 } // namespace tools::containers
 
-
-
 class Dict {
 public:
   Dict() : data() {}
@@ -373,15 +371,15 @@ public:
 
   void Load(const std::string &filename) {
     std::ifstream fin(filename, std::ios::binary);
-      size_t size;
-      fin >> size;
-      data.Clear();
-      for (size_t i(0); i < size; ++i) {
-        std::string key;
-        uint64_t val;
-        fin >> key >> val;
-        data[key] = val;
-      }
+    size_t size;
+    fin >> size;
+    data.Clear();
+    for (size_t i(0); i < size; ++i) {
+      std::string key;
+      uint64_t val;
+      fin >> key >> val;
+      data[key] = val;
+    }
   }
 
 private:
