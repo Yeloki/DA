@@ -1,11 +1,14 @@
 #include <algorithm>
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <optional>
 #include <string>
 #include <utility>
+#include <cstdint>
 
 namespace tools::containers {
+
 namespace {
 
 template <typename Tk, typename Tv> struct Node {
@@ -48,13 +51,20 @@ template <typename Tk, typename Tv> void FixHeight(Node<Tk, Tv> *p) {
 template <typename Tk, typename Tv> Node<Tk, Tv> *RightPivot(Node<Tk, Tv> *p) {
   Node<Tk, Tv> *q = p->left;
 
-  p->parent = nullptr;
-  q->parent = p;
-  if (p->right) {
-    p->right->parent = q;
-  }
   p->left = q->right;
   q->right = p;
+
+  // parents
+  q->parent = p->parent;
+  p->parent = q;
+
+  if (p->left) {
+    p->left->parent = p;
+  }
+  if (p->right) {
+    p->right->parent = p;
+  }
+
   FixHeight(p);
   FixHeight(q);
   return q;
@@ -63,14 +73,19 @@ template <typename Tk, typename Tv> Node<Tk, Tv> *RightPivot(Node<Tk, Tv> *p) {
 template <typename Tk, typename Tv> Node<Tk, Tv> *LeftPivot(Node<Tk, Tv> *q) {
   Node<Tk, Tv> *p = q->right;
 
-  p->parent = nullptr;
-  q->parent = p;
-  if (p->left) {
-    p->left->parent = q;
-  }
-
   q->right = p->left;
   p->left = q;
+
+  // parents
+  p->parent = q->parent;
+  q->parent = p;
+
+  if (q->left) {
+    q->left->parent = q;
+  }
+  if (q->right) {
+    q->right->parent = q;
+  }
   FixHeight(q);
   FixHeight(p);
   return p;
@@ -110,8 +125,10 @@ Node<Tk, Tv> *Insert(Node<Tk, Tv> *p, const Tk &key, const Tv &val) {
   }
   if (key < p->key) {
     p->left = Insert(p->left, key, val);
+    p->left->parent = p;
   } else {
     p->right = Insert(p->right, key, val);
+    p->right->parent = p;
   }
   return Balance(p);
 }
@@ -180,6 +197,7 @@ Node<Tk, Tv> *RemoveNode(Node<Tk, Tv> *p, const Tk &k) {
     if (min->left) {
       min->left->parent = min;
     }
+    min->parent = nullptr;
     return Balance(min);
   }
   return Balance(p);
@@ -213,7 +231,15 @@ public:
         }
         prev = current->parent;
       } else {
-        current = current->parent;
+        while (current->parent && current->parent->right == current) {
+          current = current->parent;
+        }
+        prev = current;
+        if (current->parent) {
+          current = current->parent;
+        } else {
+          current = nullptr;
+        }
       }
     } else if (current->right == prev) {
       prev = current;
@@ -382,6 +408,27 @@ public:
     }
   }
 
+#ifdef DEBUG
+
+  void Validate() {
+    const auto size = data.Size();
+    int real = 0;
+    auto iter = data.Begin();
+    if (!iter() && size == 0) {
+      return;
+    }
+    do {
+      ++real;
+      assert(real <= size);
+    } while (iter.next());
+  }
+
+#else
+
+  void Validate() { return; }
+
+#endif
+
 private:
   tools::containers::AVLTree<std::string, uint64_t> data;
 };
@@ -393,6 +440,8 @@ std::string str_tolower(std::string s) {
 }
 
 int main() {
+  std::ios_base::sync_with_stdio(false);
+  std::cin.tie(nullptr);
   Dict dict;
   std::string token;
   while (std::cin >> token) {
@@ -403,41 +452,43 @@ int main() {
         std::cin >> key >> val;
         const auto res = dict.AddWord(str_tolower(key), val);
         if (res) {
-          std::cout << "OK" << std::endl;
+          std::cout << "OK" << '\n';
         } else {
-          std::cout << "Exist" << std::endl;
+          std::cout << "Exist" << '\n';
         }
+
       } else if (token == "-") {
         std::string key;
         std::cin >> key;
         const auto res = dict.RemoveWord(str_tolower(key));
         if (res) {
-          std::cout << "OK" << std::endl;
+          std::cout << "OK" << '\n';
         } else {
-          std::cout << "NoSuchWord" << std::endl;
+          std::cout << "NoSuchWord" << '\n';
         }
       } else if (token == "!") {
         std::string token2, path;
         std::cin >> token2 >> path;
         if (token2 == "Save") {
           dict.Dump(path);
-          std::cout << "OK" << std::endl;
+          std::cout << "OK" << '\n';
         } else if (token2 == "Load") {
           dict.Load(path);
-          std::cout << "OK" << std::endl;
+          std::cout << "OK" << '\n';
         } else {
           throw std::runtime_error("Wrong general operand");
         }
       } else {
         const auto res = dict.Find(str_tolower(token));
         if (res) {
-          std::cout << "OK: " << res.value() << std::endl;
+          std::cout << "OK: " << res.value() << '\n';
         } else {
-          std::cout << "NoSuchWord" << std::endl;
+          std::cout << "NoSuchWord" << '\n';
         }
       }
-    } catch (const std::exception &ex) {
-      std::cout << "ERROR: " << ex.what() << std::endl;
+      dict.Validate();
+    } catch (const std::runtime_error &ex) {
+      std::cout << "ERROR: " << ex.what() << '\n';
     }
   }
 }

@@ -48,7 +48,6 @@ public:
 
   void Load(const std::string &filename) {
     std::ifstream fin(filename, std::ios::binary);
-    if (fin) {
       size_t size;
       fin >> size;
       data.Clear();
@@ -58,9 +57,6 @@ public:
         fin >> key >> val;
         data[key] = val;
       }
-    } else {
-      throw std::runtime_error("Can't open file");
-    }
   }
 
 private:
